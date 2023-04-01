@@ -122,10 +122,12 @@ void getY(int rank, int p, int n, float* L, float* b, float* y)
         // y[k] = (u[i] + v[0]) / REF(L, i, k, m);
         y[k] = u[i] + v[0];
 
-        for (int j = 0; j < p - 2; j++) {
+        for (int j = 0; j < p - 2 && i + 1 + j < n; j++) {
             v[j] = v[j + 1] + u[i + 1 + j] - REF(L, i + 1 + j, k, n) * y[k];
         }
-        v[p - 2] = u[i + p - 1] - REF(L, i + p - 1, k, n) * y[k];
+        if (i + p - 1 < n) {
+            v[p - 2] = u[i + p - 1] - REF(L, i + p - 1, k, n) * y[k];
+        }
 
         if (i < n)
             MPI_Send(v, p - 1, MPI_FLOAT, (i + 1) % p, 777, MPI_COMM_WORLD);
@@ -172,10 +174,12 @@ void getX(int rank, int p, int n, float* U, float* y, float* x)
 
         x[k] = (u[i] + v[0]) / REF(U, i, k, n);
 
-        for (int j = 0; j < p - 2; j++) {
+        for (int j = 0; j < p - 2 && i - 1 - j >= 0; j++) {
             v[j] = v[j + 1] + u[i - 1 - j] - REF(U, i - 1 - j, k, n) * x[k];
         }
-        v[p - 2] = u[i - p + 1] - REF(U, i - p + 1, k, n) * x[k];
+        if (i - p + 1 >= 0) {
+            v[p - 2] = u[i - p + 1] - REF(U, i - p + 1, k, n) * x[k];
+        }
 
         if (i > 0) {
             MPI_Send(v, p - 1, MPI_FLOAT, (i - 1) % p, 888, MPI_COMM_WORLD);
